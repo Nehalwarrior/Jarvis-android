@@ -1,0 +1,50 @@
+
+name: Build JARVIS APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'JARVIS_Beta_Source.zip'
+      - '.github/workflows/build-jarvis-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Extract JARVIS project
+        run: |
+          unzip JARVIS_Beta_Source.zip -d extracted
+
+      - name: Build APK
+        run: |
+          gradle -p extracted/JARVIS_Beta assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-Beta-APK
+          path: extracted/JARVIS_Beta/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
