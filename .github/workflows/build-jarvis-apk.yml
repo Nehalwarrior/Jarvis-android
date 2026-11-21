@@ -22,21 +22,26 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK 36
+      - name: Locate Android SDK
         run: |
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
+          echo "SDKMANAGER=$SDKMANAGER" >> $GITHUB_ENV
+          echo "$(dirname "$SDKMANAGER")" >> $GITHUB_PATH
 
-      - name: Install Gradle
+      - name: Accept SDK licenses and install packages
+        run: |
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
 
       - name: Extract JARVIS project
         run: |
-          unzip JARVIS_Beta_Source.zip -d extracted
+          unzip -o JARVIS_Beta_Source.zip -d extracted
 
       - name: Build APK
         run: |
